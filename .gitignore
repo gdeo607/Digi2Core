@@ -1,0 +1,6 @@
+*.syx
+*.bin
+*.so
+out/
+*.work/
+__pycache__/

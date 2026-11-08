@@ -1,0 +1,181 @@
+{
+ "objects": [
+  {
+   "dko": "dsp-inline-dsp.dko.json",
+   "name": "dsp-inline",
+   "externs": {
+    "_fw_records": "0x2412cc",
+    "_fw_type_cache": "0x255970",
+    "_fw_frame": "0x2558dc",
+    "_fw_trig_latch": "0x24f0cc",
+    "_fw_release_latch": "0x24f0ec",
+    "_fw_decimate": "0x1c524a",
+    "_fw_after_decimate": "0x1c5264"
+   },
+   "rename": {
+    "_di_table": "core_dsp_voices",
+    "_fw_stock": "core_dsp_voice_tail"
+   }
+  },
+  {
+   "name": "voice-hook-tail",
+   "sections": [
+    {
+     "name": "tail",
+     "kind": "text",
+     "align": 8,
+     "hex": "5499a801408c3e061c00184f"
+    }
+   ],
+   "symbols": [
+    {
+     "name": "core_dsp_voice_tail",
+     "section": "tail",
+     "value": 0,
+     "global": true
+    }
+   ],
+   "relocs": []
+  }
+ ],
+ "tables": {
+  "core_dsp_voices": {
+   "kind": "list",
+   "row": 8,
+   "max": 16,
+   "end": "0000000000000000"
+  },
+  "core_mf_selector": {
+   "kind": "indexed",
+   "row": 4,
+   "rows": 24,
+   "default": [
+    [
+     "stock",
+     "0x282567c0",
+     4
+    ]
+   ]
+  }
+ },
+ "contribute": [
+  {
+   "to": "core_mf_selector",
+   "index": 0,
+   "parts": [
+    [
+     "stock",
+     "0x282567c0",
+     4
+    ]
+   ]
+  },
+  {
+   "to": "core_mf_selector",
+   "index": 1,
+   "parts": [
+    [
+     "stock",
+     "0x282567c4",
+     4
+    ]
+   ]
+  },
+  {
+   "to": "core_mf_selector",
+   "index": 2,
+   "parts": [
+    [
+     "stock",
+     "0x282567c8",
+     4
+    ]
+   ]
+  },
+  {
+   "to": "core_mf_selector",
+   "index": 3,
+   "parts": [
+    [
+     "stock",
+     "0x282567cc",
+     4
+    ]
+   ]
+  },
+  {
+   "to": "core_mf_selector",
+   "index": 4,
+   "parts": [
+    [
+     "stock",
+     "0x282567d0",
+     4
+    ]
+   ]
+  },
+  {
+   "to": "core_mf_selector",
+   "index": 5,
+   "parts": [
+    [
+     "stock",
+     "0x282567d4",
+     4
+    ]
+   ]
+  },
+  {
+   "to": "core_mf_selector",
+   "index": 6,
+   "parts": [
+    [
+     "stock",
+     "0x282567d8",
+     4
+    ]
+   ]
+  }
+ ],
+ "patches": [
+  {
+   "addr": "0x28384e64",
+   "stock": "2500",
+   "new": "0000",
+   "relocs": [
+    [
+     0,
+     "hi16",
+     "sym:core_mf_selector",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x28384e66",
+   "stock": "c067",
+   "new": "0000",
+   "relocs": [
+    [
+     0,
+     "lo16",
+     "sym:core_mf_selector",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x28389e2a",
+   "stock": "5499a801408c",
+   "new": "3e0600000000",
+   "relocs": [
+    [
+     0,
+     "sharc.abs24",
+     "sym:_di_entry",
+     0
+    ]
+   ]
+  }
+ ]
+}

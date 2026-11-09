@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write core-dt2's mod.json and sharc_raw.json (Digitakt II OS 1.17; written for 2.0, used since).
+"""Write core-dt2 2.0's mod.json and sharc_raw.json (Digitakt II OS 1.17).
 
     python3 build_core.py --stock Digitakt_II_OS1.17.syx --tool elektron-firmware-tool --digikit MODULES
 
@@ -39,7 +39,7 @@ def main():
     ap.add_argument('--stock', required=True)
     ap.add_argument('--tool', required=True)
     ap.add_argument('--digikit', required=True, help="the release's patchkit/modules folder")
-    ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'core'))
+    ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'core-dt2'))
     a = ap.parse_args()
     work = tempfile.mkdtemp()
     subprocess.run([a.tool, '-i', a.stock, '-o', work], check=True, capture_output=True)
@@ -163,21 +163,25 @@ def main():
     defsym = {k: (v if isinstance(v, str) else '0x%08x' % v) for k, v in defsym.items()}
 
     doc = {
-        'id': 'core', 'version': '2.6.1', 'license': 'AGPL-3.0-or-later', 'title': 'core',
+        'id': 'core', 'version': '2.7', 'license': 'AGPL-3.0-or-later', 'title': 'core',
         'category': 'Framework', 'author': 'irpina (core 1.0), Em D (DigiKit frameworks); core 2.0 port',
         'description': 'The boot copier and the hook bus for the Digitakt II (core 1.0), and the frameworks '
                        'mods build on: added machine types (core_machines), added parameters (core_params), '
-                       'knob drawers (core_knobs), the pattern service (core_trig_*, core_plock_*), and on the DSP the in-renderer voice hook (DigiKit\'s '
+                       'knob drawers (core_knobs), the pattern service (core_trig_*, core_plock_*), the SDK\'s machines (sdk_alpha_machines: elekloader\'s docs/SDK.md), and on the DSP the in-renderer voice hook (DigiKit\'s '
                        'core/machines, core/params and core/dsp-inline) with the tables mods add to. On its own '
                        'it changes nothing the unit does.',
         'device': 'digitakt-mk2', 'os': '1.17',
-        'sources': ['core.s', 'settings.s', 'fast.s', 'personalize.s', 'boot.s', 'machines.s', 'params.s', 'knobs.s', 'storage.s', 'pattern.c'],
+        'sources': ['core.s', 'settings.s', 'fast.s', 'personalize.s', 'boot.s', 'machines.s', 'params.s', 'knobs.s', 'storage.s', 'pattern.c', 'sdk.c', 'sdk_machine.c'],
         'defsym': defsym,
         'subscribe': [{'event': 'ev_tick', 'fn': 'core_fastcopy', 'order': 0},
+                      {'event': 'ev_tick', 'fn': 'core_sdk_tick', 'order': 10},
                       {'event': 'ev_draw', 'fn': 'mo_draw', 'order': 99}],
+        # core 2.7: the SDK machines' shared codes 327-338 draw through core_sdk_knob
+        'contribute': [{'to': 'core_knobs', 'order': 90, 'data': '%08x%08x00000000' % (327, 338),
+                        'relocs': [[8, 'abs32', 'sym:core_sdk_knob', 0]]}],
         'collections': {'ev_tick': 4, 'ev_draw': 4, 'ev_key': 4, 'ev_enc': 4, 'ev_settings': 4,
                         'ev_personalize': 4, 'core_fast': 16, 'core_machines': 4, 'core_params': 4,
-                        'core_knobs': 12},
+                        'core_knobs': 12, 'sdk_alpha_machines': 4},
         'sharc_raw': 'sharc_raw.json',
         'sites': sites,
     }

@@ -48,13 +48,20 @@ core_store_boot:
 | ---- the end of the SRC-group walk (the list builder's `jsr (a3)`, stock 0x400da004: return 34). The builder keeps
 | the value index in d2 and the track's type in d4 and stops when the end is below d2. For a type with a page 2 of
 | its own, after 34 the walk goes on at 69 and ends after 70. d0 = the end; d1, a0, a1 are scratch.
+| core 2.7: an SDK machine's too (flag bit 4); and before the walk's first value the SDK machines' shared codes take
+| this machine's defaults (core_sdk_defaults), which machine select sets.
         .globl  st_list_end
 st_list_end:
-        cmpi.l  #35, %d2
+        cmpi.l  #25, %d2
+        bne.s   8f
+        move.l  %d4, -(%sp)
+        jsr     core_sdk_defaults
+        addq.l  #4, %sp
+8:      cmpi.l  #35, %d2
         blt.s   9f
         move.l  %d0, -(%sp)
         move.l  %d4, %d0
-        jsr     mf_has_page2
+        jsr     mf_own_28
         movea.l (%sp)+, %a0             | (movea leaves the flags)
         beq.s   9f
         cmpi.l  #69, %d2

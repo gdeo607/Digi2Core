@@ -7,6 +7,7 @@
 core_boot_init:
         lea     -44(%sp), %sp
         movem.l %d2-%d7/%a2-%a6, (%sp)
+        jsr     core_sdk_boot           | core 2.7: the SDK machines and their codes, for the two below
         jsr     core_machines_boot
         jsr     core_params_boot
         jsr     core_store_boot

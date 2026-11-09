@@ -1,11 +1,11 @@
 {
  "id": "core",
- "version": "2.6.1",
+ "version": "2.7",
  "license": "AGPL-3.0-or-later",
  "title": "core",
  "category": "Framework",
  "author": "irpina (core 1.0), Em D (DigiKit frameworks); core 2.0 port",
- "description": "The boot copier and the hook bus for the Digitakt II (core 1.0), and the frameworks mods build on: added machine types (core_machines), added parameters (core_params), knob drawers (core_knobs), the pattern service (core_trig_*, core_plock_*), and on the DSP the in-renderer voice hook (DigiKit's core/machines, core/params and core/dsp-inline) with the tables mods add to. On its own it changes nothing the unit does.",
+ "description": "The boot copier and the hook bus for the Digitakt II (core 1.0), and the frameworks mods build on: added machine types (core_machines), added parameters (core_params), knob drawers (core_knobs), the pattern service (core_trig_*, core_plock_*), the SDK's machines (sdk_alpha_machines: elekloader's docs/SDK.md), and on the DSP the in-renderer voice hook (DigiKit's core/machines, core/params and core/dsp-inline) with the tables mods add to. On its own it changes nothing the unit does.",
  "device": "digitakt-mk2",
  "os": "1.17",
  "sources": [
@@ -18,7 +18,9 @@
   "params.s",
   "knobs.s",
   "storage.s",
-  "pattern.c"
+  "pattern.c",
+  "sdk.c",
+  "sdk_machine.c"
  ],
  "defsym": {
   "DRAWALL": "0x4011bc96",
@@ -82,6 +84,11 @@
    "order": 0
   },
   {
+   "event": "ev_tick",
+   "fn": "core_sdk_tick",
+   "order": 10
+  },
+  {
    "event": "ev_draw",
    "fn": "mo_draw",
    "order": 99
@@ -97,7 +104,8 @@
   "core_fast": 16,
   "core_machines": 4,
   "core_params": 4,
-  "core_knobs": 12
+  "core_knobs": 12,
+  "sdk_alpha_machines": 4
  },
  "sharc_raw": "sharc_raw.json",
  "sites": [
@@ -1256,6 +1264,21 @@
    "stock": "40017cd4",
    "op": "ptr",
    "target": "mo_codeat"
+  }
+ ],
+ "contribute": [
+  {
+   "to": "core_knobs",
+   "order": 90,
+   "data": "000001470000015200000000",
+   "relocs": [
+    [
+     8,
+     "abs32",
+     "sym:core_sdk_knob",
+     0
+    ]
+   ]
   }
  ]
 }

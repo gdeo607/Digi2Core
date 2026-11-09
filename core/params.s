@@ -62,10 +62,16 @@ core_params_boot:
         clr.l   (%a2)+                  | randomize
         subq.l  #1, %d1
         bne.s   2b
+        moveq   #0, %d3                 | 0: core_params, 1: core_sdk_params (core 2.7: the SDK machines' shared codes)
         lea     core_params, %a3        | the parameters the mods add (a3: the list, never clobbered below)
 4:      move.l  (%a3)+, %d0
-        beq.w   9f
-        movea.l %d0, %a1
+        bne.s   41f
+        tst.l   %d3
+        bne.w   9f
+        moveq   #1, %d3
+        lea     core_sdk_params, %a3
+        bra.s   4b
+41:     movea.l %d0, %a1
         move.l  (%a1)+, %d4             | code
         subi.l  #PF_FIRST, %d4
         cmpi.l  #PF_N, %d4

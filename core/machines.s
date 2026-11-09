@@ -17,6 +17,9 @@
 |   +52  name       C string: the machine list (upper-cased), +56 short: the SRC page header
 |   +60  f2[8]      with flag bit 2: the codes of SRC page 2, knobs A-H (0: no knob). Page 2 takes a code of a
 |                   parameter on value index 29, 30, 69 or 70 (core_params slots 8-11); SRC toggles the pages
+|   +92  f3[4]      with flag bit 5 (core 2.7): codes on no page, which the machine's values still answer to (the
+|                   value index -> code mapping, LFO destinations, defaults): an SDK machine's knobs that no page shows
+| Flag bit 4 (core 2.7): values 28-30, 69 and 70 are the machine's own without a page 2 (an SDK machine's).
 |
 | A type no installed mod adds is a gap row, as DigiKit's: a clone of type 0 that is not listed, so a
 | project that names it plays as type 0. What each routine does at its site is DigiKit's (comments kept);
@@ -35,7 +38,8 @@
         .equ    O_SNAME,  60            | pointer to the short label (C string)
         .equ    O_ONEPAGE, 64
         .equ    O_F2,     68            | page 2: eight codes (zero without flag bit 2)
-        .equ    ROWSIZE,  100
+        .equ    O_F3,     100           | four codes on no page (zero without flag bit 5; core 2.7)
+        .equ    ROWSIZE,  116
         .equ    SLICE,    6
         .equ    REPSIZE,  48            | bytes per std::string representation in mf_strbuf
         | struct core_machine_dt2
@@ -47,6 +51,7 @@
         .equ    D_NAME, 52
         .equ    D_SNAME, 56
         .equ    D_F2, 60
+        .equ    D_F3, 92
 
         .section .run, "ax"
         .balign 4                       | (a .run section is byte-aligned by default: keep code even)
@@ -72,10 +77,16 @@ core_machines_boot:
         lea     ROWSIZE(%a0), %a0
         subq.l  #1, %d1
         bne.s   1b
+        moveq   #0, %d2                 | 0: core_machines, 1: core_sdk_machines (core 2.7: the SDK machines)
         lea     core_machines, %a2      | the machines the mods add
 3:      move.l  (%a2)+, %d0
-        beq.w   6f
-        movea.l %d0, %a1
+        bne.s   31f
+        tst.l   %d2
+        bne.w   6f
+        moveq   #1, %d2
+        lea     core_sdk_machines, %a2
+        bra.s   3b
+31:     movea.l %d0, %a1
         move.l  D_TYPE(%a1), %d0
         subi.l  #MF_FIRST, %d0
         cmpi.l  #MF_N, %d0
@@ -100,7 +111,13 @@ core_machines_boot:
         move.l  %d0, O_ONEPAGE(%a0)
         move.l  D_NAME(%a1), O_NAME(%a0)
         move.l  D_SNAME(%a1), O_SNAME(%a0)
-        btst    #2, O_FLAGS + 3(%a0)
+        btst    #5, O_FLAGS + 3(%a0)
+        beq.s   32f
+        move.l  D_F3(%a1), O_F3(%a0)    | f3[0..3] (core 2.7)
+        move.l  D_F3 + 4(%a1), O_F3 + 4(%a0)
+        move.l  D_F3 + 8(%a1), O_F3 + 8(%a0)
+        move.l  D_F3 + 12(%a1), O_F3 + 12(%a0)
+32:     btst    #2, O_FLAGS + 3(%a0)
         beq.w   3b
         moveq   #7, %d1                 | page 2: f2[0..7]
         lea     D_F2(%a1), %a1
@@ -448,6 +465,25 @@ mf_has_page2:
         lea     12(%sp), %sp            | (lea leaves the flags)
         rts
 
+| mf_own_28: d0 = a machine type -> Z clear when it is an added type with flag bit 2 or 4: values 28-30 are its own,
+| not a sample machine's SAMP, BANK and SLOT (core 2.7: flag bit 4, an SDK machine's, without a page 2). Preserves
+| every register.
+        .globl  mf_own_28
+mf_own_28:
+        lea     -12(%sp), %sp
+        movem.l %d0/%d1/%a0, (%sp)
+        subi.l  #MF_FIRST, %d0
+        cmpi.l  #MF_N, %d0
+        bcc.s   1f
+        bsr.w   mf_row
+        move.l  O_FLAGS(%a0), %d0
+        andi.l  #20, %d0
+        bra.s   2f
+1:      moveq   #0, %d0
+2:      movem.l (%sp), %d0/%d1/%a0      | (movem leaves the flags)
+        lea     12(%sp), %sp            | (lea leaves the flags)
+        rts
+
 | ---- the frame builder, after its fourth per-track copy (stock 0x4002ebdc: lea 12(sp),sp; move.w d7,148(a3)): for a
 | track whose machine has a page 2, its smoothed values 69 and 70 (a5 + 0x22 + 2 * index) go to frame +0xee, +0xf0
 | (the DSP's per-track halfwords 10 and 11), the place of a SLICE track's slice words, unused by stock otherwise.
@@ -559,6 +595,10 @@ mf_ownidx:
         bne.s   8f
         lea     O_F2(%a0), %a1
         moveq   #7, %d2
+        bsr.s   2f
+        bne.s   8f
+        lea     O_F3(%a0), %a1          | the codes on no page (zero without flag bit 5)
+        moveq   #3, %d2
         bsr.s   2f
 8:      movea.l %d3, %a0
         movem.l (%sp), %d1-%d3/%a1-%a2
@@ -760,7 +800,7 @@ mo_m2:  .asciz  "2/2"
 
         .section .bss
         .balign 4
-        .globl  mf_rows, mf_names, mf_permit, mf_pertype, mf_list_buf, mf_list_end, mf_entries
+        .globl  mf_rows, mf_names, mf_permit, mf_pertype, mf_list_buf, mf_list_end, mf_entries, mo_alt
 mf_ready:    .space 4
 mo_alt:      .space 4                   | page 2 shown: (type << 8 | track) + 1, else 0
 mo_seen:     .space 4                   | ev_draw: 1/2 the SRC page of a two-page machine was drawn on page 1/2
@@ -801,7 +841,7 @@ core_join28:
         jmp     0x4002e97c
 1:      jmp     0x4002e994
 
-| trk_page2: d0 = an audio track -> Z clear when its machine (type byte 0x800064e0 + 154 t, the copy the frame builder reads) has a page 2. Keeps d1-a7.
+| trk_page2: d0 = an audio track -> Z clear when its machine (type byte 0x800064e0 + 154 t, the copy the frame builder reads) keeps 28-30 (a page 2, or core 2.7's flag bit 4). Keeps d1-a7.
 trk_page2:
         lea     -8(%sp), %sp
         movem.l %d1/%a0, (%sp)
@@ -810,7 +850,7 @@ trk_page2:
         addi.l  #0x800064e0, %d1          | the working copy 0x400d9406 makes of 0x80003cd0
         movea.l %d1, %a0
         mvs.b   (%a0), %d0
-        bsr.w   mf_has_page2
+        bsr.w   mf_own_28
         movem.l (%sp), %d1/%a0          | (movem and lea leave the flags)
         lea     8(%sp), %sp
         rts

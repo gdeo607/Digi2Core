@@ -1,0 +1,114 @@
+--- a/tools/patchkit/pk_crosscheck.py
++++ b/tools/patchkit/pk_crosscheck.py
+@@ -202,6 +202,10 @@
+ COMPARE_OPS = {"comp", "compu", "fcomp", "fcompu"}
+ 
+ 
++# The multiplier result registers a data move names (PRM Table 18-29, MRDATAMOVE).
++MR_NAMES = {"mr0f", "mr1f", "mr2f", "mr0b", "mr1b", "mr2b"}
++
++
+ class CrossCheckError(RuntimeError):
+     pass
+ 
+@@ -220,6 +224,7 @@
+     imms: tuple[tuple[int, int], ...]  # (value, field width in bits)
+     cond: int
+     flags: frozenset[str]
++    mulop: int | None = None  # a single-function multiplier op's opcode[19:12] (Selache's generic `mul 0xNN` listing)
+ 
+ 
+ @dataclass(frozen=True)
+@@ -260,6 +265,13 @@
+         cond = COND_CODE[m.group(1)]
+         t = t[m.end() :]
+     t = re.sub(r"until\s+(not\s+)?lce", "", t)
++    # A multiplier op seldump has no mnemonic for is listed `mul 0xNN rn rx ry` (opcode[19:12], then the three
++    # register fields): the opcode is compared with our decode's (compare), not as an immediate.
++    mul = re.match(r"mul\s+(0x[0-9a-f]+)\s+", t)
++    mulop = None
++    if mul:
++        mulop = int(mul.group(1), 16)
++        t = t[mul.end() :]
+     t = re.sub(r"\(\s*pc\s*,", "(", t)  # PC-relative operand: the offset is the number
+     flags = set()
+     for f in re.findall(r"\(\s*(\w+)\s*\)", t):
+@@ -279,8 +291,12 @@
+         elif tok[0].isalpha() or tok[0] == "_":
+             if tok in UREG_CODE:
+                 regs.add(UREG_CODE[tok])
++            elif tok in MR_NAMES:
++                flags.add(tok)  # an MR register of a data move: compared by name (no ureg code)
+             elif tok not in KEYWORDS:
+                 raise CrossCheckError(f"unknown word {tok!r} in Selache line {text!r}")
++    if mulop is not None:
++        flags.add(f"mulop={mulop:#04x}")
+     return Operands(frozenset(regs), tuple(imms), cond, frozenset(flags))
+ 
+ 
+@@ -326,10 +342,15 @@
+     cond = f.get("cond", ALWAYS)
+ 
+     compute = f.get("compute")
++    mulop = None
+     if compute and form != "2c":
+-        r, i = _compute_regs(render_compute(compute & 0x7FFFFF)[0])
++        text = render_compute(compute & 0x7FFFFF)[0]
++        r, i = _compute_regs(text)
+         regs |= r
+         imms += i
++        flags |= {m.lower() for m in re.findall(r"\bMR[012][FB]\b", text or "")}
++        if sharcinv.classify_compute(compute & 0x7FFFFF)[0] == "MULT":
++            mulop = (compute >> 12) & 0xFF
+ 
+     def jflags() -> None:
+         if f.get("j"):
+@@ -438,7 +459,7 @@
+         raise CrossCheckError(
+             f"form {form} is not cross-checked yet (tools/patchkit/pk_crosscheck.py)"
+         )
+-    return NativeOperands(frozenset(regs), tuple(imms), cond, frozenset(flags))
++    return NativeOperands(frozenset(regs), tuple(imms), cond, frozenset(flags), mulop)
+ 
+ 
+ # Forms compared operand by operand in their roles (`strict_check`), not as register and immediate sets: the listing
+@@ -504,6 +525,11 @@
+     """None when they agree, else what differs."""
+     if s.cond != n.cond:
+         return f"condition {s.cond:#x} vs {n.cond:#x}"
++    listed = {x for x in s.flags if x.startswith("mulop=")}
++    if listed:
++        if n.mulop is None or listed != {f"mulop={n.mulop:#04x}"}:
++            return f"multiplier opcode {sorted(listed)} vs {n.mulop}"
++        s = Operands(s.regs, s.imms, s.cond, s.flags - listed)
+     if s.flags != n.flags:
+         return f"flags {sorted(s.flags)} vs {sorted(n.flags)}"
+     if s.regs != n.regs:
+--- a/tools/sharc_dev/sharcfn/decode.py
++++ b/tools/sharc_dev/sharcfn/decode.py
+@@ -278,12 +278,25 @@
+     ), True
+ 
+ 
++# PRM Table 18-29 (sharcspec/compute_table.json "mrdatamove"): opcode[15:12] -> the MR register.
++_MRDATAMOVE = {0x0: "MR0F", 0x1: "MR1F", 0x2: "MR2F", 0x4: "MR0B", 0x5: "MR1B", 0x6: "MR2B"}
++
++
+ def render_compute(field23: int):
+     """-> (mnemonic or None, gap_flag) for a 23-bit compute field, using
+     tools/sharc_dev/sharcinv.py's classify_compute() to identify cu/opcode and the
+     Figure/Table bit layouts above for the register operands."""
+     if not field23:
+         return None, False
++    if field23 >> 17 == 0b100000:
++        # MR data move (PRM Table 18-29, MRDATAMOVE; bits 22:17 '100000' from the PGR's figure): D[16]
++        # (0: to the register file, 1: to the MR register), opcode[15:12] the MR register, Rn[11:8].
++        mr = _MRDATAMOVE.get((field23 >> 12) & 0xF)
++        if mr is not None and not field23 & 0xFF:
++            rn = (field23 >> 8) & 0xF
++            if (field23 >> 16) & 1:
++                return "%s = R%d" % (mr, rn), False
++            return "R%d = %s" % (rn, mr), False
+     cu, d = sharcinv.classify_compute(field23)
+     opcode = d.get("opcode", 0)
+     if cu == "ALU":

@@ -163,7 +163,7 @@ def main():
     defsym = {k: (v if isinstance(v, str) else '0x%08x' % v) for k, v in defsym.items()}
 
     doc = {
-        'id': 'core', 'version': '2.6', 'license': 'AGPL-3.0-or-later', 'title': 'core',
+        'id': 'core', 'version': '2.6.1', 'license': 'AGPL-3.0-or-later', 'title': 'core',
         'category': 'Framework', 'author': 'irpina (core 1.0), Em D (DigiKit frameworks); core 2.0 port',
         'description': 'The boot copier and the hook bus for the Digitakt II (core 1.0), and the frameworks '
                        'mods build on: added machine types (core_machines), added parameters (core_params), '

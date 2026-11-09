@@ -1,7 +1,7 @@
 {
  "elemod": 2,
  "id": "core",
- "version": "2.6",
+ "version": "2.6.1",
  "title": "core",
  "description": "The boot copier and the hook bus for the Digitakt II (core 1.0), and the frameworks mods build on: added machine types (core_machines), added parameters (core_params), knob drawers (core_knobs), the pattern service (core_trig_*, core_plock_*), and on the DSP the in-renderer voice hook (DigiKit's core/machines, core/params and core/dsp-inline) with the tables mods add to. On its own it changes nothing the unit does.",
  "category": "Framework",
@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 5432,
+   "len": 5528,
    "parts": [
     [
      "hex",
@@ -675,7 +675,16 @@
     ],
     [
      "hex",
-     "4e7543f940213a5041f900000000704520d9538066fa704d20c0704e20c043f940213b6441f900000000704d20d9538066fa704520c0704620c04e750c82000000236d1c2f0020044eb900000000205f670e0c82000000456c02744570464e7570224e75000020794316501c20084e752f0a24794316501c4a8a6752"
+     "4e7543f940213a5041f900000000704520d9538066fa704d20c0704e20c043f940213b6441f900000000704d20d9538066fa704520c0704620c04e750c82000000236d1c2f0020044eb900000000205f670e0c82000000456c02744570464e7570224e7500004a8067122007612e660c7000302c005a4ef94002e8e64ef94002e8fe4a80671020066112660a716c005a4ef94002e97c4ef94002e9944feffff848d70102223c0000009a4c0018000681800064e020417110610000004cd701024fef0008"
+    ],
+    [
+     "stock",
+     "0x400d6896",
+     8
+    ],
+    [
+     "hex",
+     "20084e752f0a24794316501c4a8a6752"
     ],
     [
      "stock",
@@ -986,7 +995,7 @@
   },
   ".bss": {
    "align": 4,
-   "size": 27408
+   "size": 27312
   }
  },
  "symbols": {
@@ -1383,8 +1392,8 @@
    2997
   ],
   "trk_page2": [
-   ".bss",
-   4122
+   ".run",
+   4002
   ],
   "PF_FIRST": [
    "abs",
@@ -1452,7 +1461,7 @@
   ],
   "core_plock_clear": [
    ".run",
-   5292
+   5388
   ],
   "mf_list_buf": [
    ".bss",
@@ -1463,8 +1472,8 @@
    480
   ],
   "core_split28": [
-   ".bss",
-   4068
+   ".run",
+   3948
   ],
   "core_draw": [
    ".run",
@@ -1484,7 +1493,7 @@
   ],
   "core_plock_count": [
    ".run",
-   5370
+   5466
   ],
   "mf_clone6": [
    ".run",
@@ -1500,11 +1509,11 @@
   ],
   "core_trig_notes": [
    ".run",
-   4530
+   4626
   ],
   "st_load": [
    ".bss",
-   27092
+   26996
   ],
   "core_machine_row": [
    ".run",
@@ -1540,7 +1549,7 @@
   ],
   "core_trig_lock": [
    ".run",
-   4860
+   4956
   ],
   "mf_clone2": [
    ".run",
@@ -1552,7 +1561,7 @@
   ],
   "core_pattern": [
    ".run",
-   3948
+   4044
   ],
   "mo_draw": [
    ".run",
@@ -1564,7 +1573,7 @@
   ],
   "core_plock_get": [
    ".run",
-   5034
+   5130
   ],
   "mf_clone3": [
    ".run",
@@ -1576,7 +1585,7 @@
   ],
   "core_track_len": [
    ".run",
-   4110
+   4206
   ],
   "core_fastcopy": [
    ".run",
@@ -1588,11 +1597,11 @@
   ],
   "core_plock_set": [
    ".run",
-   5164
+   5260
   ],
   "pf_table": [
    ".bss",
-   6468
+   6372
   ],
   "core_tick": [
    ".run",
@@ -1628,11 +1637,11 @@
   ],
   "core_trig_set_notes": [
    ".run",
-   4716
+   4812
   ],
   "core_pattern_obj": [
    ".run",
-   3958
+   4054
   ],
   "pf_t2": [
    ".run",
@@ -1640,15 +1649,15 @@
   ],
   "core_step_flags": [
    ".run",
-   4390
+   4486
   ],
   "core_track_obj": [
    ".run",
-   4060
+   4156
   ],
   "core_trig_set": [
    ".run",
-   4236
+   4332
   ],
   "core_frame_hi": [
    ".run",
@@ -1656,11 +1665,11 @@
   ],
   "pf_rows": [
    ".bss",
-   4164
+   4068
   ],
   "core_join28": [
-   ".bss",
-   4096
+   ".run",
+   3976
   ],
   "mo_setpage": [
    ".run",
@@ -1668,11 +1677,11 @@
   ],
   "st_save": [
    ".bss",
-   26808
+   26712
   ],
   "core_trig_get": [
    ".run",
-   4164
+   4260
   ],
   "core_personalize": [
    ".run",
@@ -2124,7 +2133,7 @@
    2432,
    "abs32",
    "sec:.bss",
-   6472
+   6376
   ],
   [
    ".run",
@@ -2187,14 +2196,14 @@
    3016,
    "abs32",
    "sec:.bss",
-   6468
+   6372
   ],
   [
    ".run",
    3036,
    "abs32",
    "sec:.bss",
-   4164
+   4068
   ],
   [
    ".run",
@@ -2208,35 +2217,35 @@
    3132,
    "abs32",
    "sec:.bss",
-   4164
+   4068
   ],
   [
    ".run",
    3164,
    "abs32",
    "sec:.bss",
-   6468
+   6372
   ],
   [
    ".run",
    3334,
    "abs32",
    "sec:.bss",
-   4164
+   4068
   ],
   [
    ".run",
    3400,
    "abs32",
    "sec:.bss",
-   4164
+   4068
   ],
   [
    ".run",
    3500,
    "abs32",
    "sec:.bss",
-   4164
+   4068
   ],
   [
    ".run",
@@ -2250,14 +2259,14 @@
    3856,
    "abs32",
    "sec:.bss",
-   26808
+   26712
   ],
   [
    ".run",
    3884,
    "abs32",
    "sec:.bss",
-   27092
+   26996
   ],
   [
    ".run",
@@ -2268,87 +2277,94 @@
   ],
   [
    ".run",
-   4074,
-   "abs32",
+   4032,
+   "pc16",
    "sec:.run",
-   3958
+   1998
   ],
   [
    ".run",
-   4124,
+   4170,
    "abs32",
    "sec:.run",
-   3958
+   4054
   ],
   [
    ".run",
-   4276,
+   4220,
    "abs32",
    "sec:.run",
-   3958
+   4054
   ],
   [
    ".run",
-   4438,
+   4372,
    "abs32",
    "sec:.run",
-   4164
+   4054
   ],
   [
    ".run",
-   4456,
+   4534,
    "abs32",
    "sec:.run",
-   3958
+   4260
   ],
   [
    ".run",
-   4752,
+   4552,
    "abs32",
    "sec:.run",
-   4164
+   4054
   ],
   [
    ".run",
-   4770,
+   4848,
    "abs32",
    "sec:.run",
-   3958
+   4260
   ],
   [
    ".run",
-   4904,
+   4866,
    "abs32",
    "sec:.run",
-   4530
+   4054
   ],
   [
    ".run",
-   4978,
+   5000,
    "abs32",
    "sec:.run",
-   4716
+   4626
   ],
   [
    ".run",
-   5194,
+   5074,
    "abs32",
    "sec:.run",
-   4164
+   4812
   ],
   [
    ".run",
-   5226,
+   5290,
    "abs32",
    "sec:.run",
-   3958
+   4260
   ],
   [
    ".run",
-   5324,
+   5322,
    "abs32",
    "sec:.run",
-   3958
+   4054
+  ],
+  [
+   ".run",
+   5420,
+   "abs32",
+   "sec:.run",
+   4054
   ]
  ],
  "sites": [
@@ -4578,7 +4594,7 @@
    "fast.s": "96fc437340b63289ad269bf03d66540cd500987be2d0611b37748accb0621f18",
    "personalize.s": "10372f64d233a1cc3c5abcb202084c3a8707e17e8d656038754c44a3e7554111",
    "boot.s": "fe70b04416866626c83fe0f7951a772d761b7ff21e90c64e0263b9006ebd0623",
-   "machines.s": "ee51a60d0768167c272901950f2e2bc62a50bd78b9e993030149a1a0f5343bbe",
+   "machines.s": "344ba6057653d6330be35ab4b5c1ac2a680ea86b2f931f1adc6f97588d9a77dc",
    "params.s": "5c76635a93887463ac235136ad46bd0afeea4dd01e812c447d0ada9b5a4c52ec",
    "knobs.s": "17622768cd4d0c4d1da08d0ae4187746d7cb7d8de1933890acb56a76fa806871",
    "storage.s": "48d5d6f80dcac84166dd31670466ac8643ead5a623b477433e0df7f20ea12791",

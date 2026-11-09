@@ -1,7 +1,7 @@
-# Digi2Core: core-dt2 2.6 for the Digitakt II
+# Digi2Core: core-dt2 2.6.1 for the Digitakt II
 
 The core every mod in this family builds on, for the **Elektron Digitakt II** on **OS 1.17**. It is an elekloader
-mod (`core`, version 2.6). It starts from core 1.0 (irpina's boot copier and hook bus, unchanged: the same seven
+mod (`core`, version 2.6.1). It starts from core 1.0 (irpina's boot copier and hook bus, unchanged: the same seven
 sites, events and `.fast` table) and adds the frameworks DigiKit's All-in-One builds its machines on, turned into core
 services. On top of those it gives added machines a second SRC page with controls that are saved, p-lockable and LFO
 destinations.
@@ -19,7 +19,7 @@ On its own it changes nothing the unit does. Mods that use it:
 
 ```
 python -m elekloader.patch --stock Digitakt_II_OS1.17.syx \
-  --mod elemods/core-2.6.elemod --mod <a mod>.elemod --out Digitakt_II_mods.syx
+  --mod elemods/core-2.6.1.elemod --mod <a mod>.elemod --out Digitakt_II_mods.syx
 ```
 
 You need an elekloader with `sharc_raw` support for the Digitakt II (the `dt2-sharc-raw` branch of
@@ -100,6 +100,9 @@ them. Call them from the UI side (`ev_tick`, `ev_key`, `ev_enc`, `ev_draw`), not
 - **2.6**: the pattern service (`pattern.c`, `pattern.h`). Checked in the emulator: a trig placed, NOTE, VEL and LEN
   locked and a TUNE lock set, changed and cleared write the same bytes the panel does; out-of-range calls are
   refused.
+- **2.6.1**: 2.4-2.6 built the value-28 routines (`core_split28`, `core_join28`) into `.bss` instead of code, so the
+  unit stopped with an illegal-instruction exception right after boot (the emulator ran the zeros as no-ops). They
+  are code again; do not flash a 2.4, 2.5 or 2.6 build.
 
 Known: on the SRC page a trig key picks a sample and turns the track into ONESHOT, as on the stock OS.
 

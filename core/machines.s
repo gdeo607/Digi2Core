@@ -778,6 +778,7 @@ mf_strbuf:   .space REPSIZE * 2 * MF_N
 | (a sample machine's SAMP: bank * 128 + slot) into 29 and 30 (0x4002e8de) and joins them back into 28 (0x4002e974),
 | which cuts any other value 28 to its low 10 bits. A machine with a page 2 of its own keeps 28, 29 and 30 as they are.
 | Sites: tst.l d0; beq.s SKIP; move.w / mvs.w 90(a4),d0 (8 bytes); the track is d7 (split) / d6 (join).
+        .text                               | code again after the .bss block above (2.6.1: 2.4-2.6 put this in .bss)
         .globl  core_split28, core_join28
 core_split28:
         tst.l   %d0

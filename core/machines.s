@@ -403,15 +403,33 @@ mf_clone4:
         cmp.l   %d2, %d0
         CLONE_BODY 2, MF_C4 + 6, MF_C4A
 | clone.6: moveq #6,D1; mvs.b (0x990,A0),D0; cmp.l D0,D1; bne.w U. (The frame builder: a SLICE track's slice words
-| at frame +0xee..+0xf9. A machine with a page 2 of its own is not a SLICE here: those words carry its values 69, 70.)
+| at frame +0xee..+0xf9. A machine with a page 2 or a knob H of its own is not a SLICE here: those words carry its
+| values; core 2.5 adds the knob-H machines, whose H is at +0xf2.)
 mf_clone6:
         moveq   #6, %d1
         mvs.b   0x990(%a0), %d0
-        bsr.w   mf_has_page2
+        bsr.w   mf_own_frame
         beq.s   7f
         jmp     MF_C6A
 7:      cmp.l   %d0, %d1
         CLONE_BODY 0, MF_C6 + 12, MF_C6A
+
+| mf_own_frame: d0 = a machine type -> Z clear when it is an added type with flag bit 2 or 3: the frame's halfwords
+| 10-15 carry its own values (page 2, knob D, knob H), not a SLICE's slice words (core 2.5). Preserves every register.
+mf_own_frame:
+        lea     -12(%sp), %sp
+        movem.l %d0/%d1/%a0, (%sp)
+        subi.l  #MF_FIRST, %d0
+        cmpi.l  #MF_N, %d0
+        bcc.s   1f
+        bsr.w   mf_row
+        move.l  O_FLAGS(%a0), %d0
+        andi.l  #12, %d0
+        bra.s   2f
+1:      moveq   #0, %d0
+2:      movem.l (%sp), %d0/%d1/%a0      | (movem leaves the flags)
+        lea     12(%sp), %sp            | (lea leaves the flags)
+        rts
 
 | mf_has_page2: d0 = a machine type -> Z clear when it is an added type with flag bit 2. Preserves every register.
         .globl  mf_has_page2
@@ -439,7 +457,7 @@ core_frame_hi:
         move.w  %d7, 148(%a3)
         lea     (%a2, %d4.l), %a0       | the track's type, as the builder reads it below (a0, d0 are reloaded there)
         mvs.b   0x990(%a0), %d0
-        bsr.w   mf_has_page2
+        bsr.w   mf_own_frame            | a page 2 or a knob H of its own (core 2.5: knob H alone too)
         beq.s   1f
         move.l  0xac(%a5), 0xee(%a4)    | values 69 and 70
         move.l  0x5a(%a5), 0xf4(%a4)    | values 28 and 29 to halfwords 13 and 14, 30 to 15: the builder zeroes

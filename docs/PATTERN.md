@@ -3,8 +3,8 @@
 The active pattern's address is the long at `0x4316501c`. A pattern is 121740 bytes (`0x1db8c`, the size every
 pattern copy in the firmware uses). Offsets below are from its start; "step" is 0-127 and "track" 0-15.
 
-Read from the step builder (`0x400d6582`, which fills the fire event) and its lock reader (`0x400d6516`), and checked
-in the emulator by diffing the pattern while trigs and locks are set from the panel (`lkdiff.py`, LOCKDBG).
+Read from the step builder (`0x400d6982`, which fills the fire event), its lock reader (`0x400d6916`) and the editors
+the panel calls (below), and checked in the emulator by diffing the pattern while trigs and locks are set from the panel (`lkdiff.py`, LOCKDBG).
 
 | offset | size | what |
 |---|---|---|
@@ -51,6 +51,19 @@ A pattern has 80 slots. A slot is a header of two bytes, the value index (0-70) 
 value as the sound stores it (TUNE at 0 is `0x4000`). The slot table at 118512 points each locked value of a track
 at its slot; the counts at 119648 let the step builder skip steps without locks. For a step, the lock reader walks
 the track's 71 values and copies `{index, value}` pairs for each slot that has a value at that step.
+
+## The firmware's editors (1.17)
+
+| address | does |
+|---|---|
+| `0x40198b7e()` | the project; pattern object `i` is at +0x43d0 + 2388 i (its pattern's bytes at +16), track object `t` at +0x70 + 132 t of that (store pointers at +44 parameter locks, +48 trig records; the track at +60) |
+| `0x400597c8(track obj, step, flags, on)` | sets or clears step flags; bit 0 places or removes the trig (`0x40059610` sets a new one up: four `{ff, ff, ff, 0}` notes) |
+| `0x400392be(trig store, track, step, vector)` | replaces a step's notes: a vector `{begin, end}` of 4-byte `{note, vel, len, flag}` |
+| `0x400391a4(trig store, track, step)` | frees a step's records |
+| `0x40054ad4(track obj, step, index, value)` | sets a parameter lock (`0x40040702` on the store); `0x40054b5c(track obj, step)` clears a step's |
+| `0x40054a6c(track obj)` | the track's length |
+
+The active pattern's own number is the long at +121736.
 
 Not known yet: what bytes 2-4 of records 2-4 hold when a trig has more than one note, and the step word's flag bits.
 

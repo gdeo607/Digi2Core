@@ -1,7 +1,7 @@
-# Digi2Core: core-dt2 2.4 for the Digitakt II
+# Digi2Core: core-dt2 2.6 for the Digitakt II
 
 The core every mod in this family builds on, for the **Elektron Digitakt II** on **OS 1.17**. It is an elekloader
-mod (`core`, version 2.4). It starts from core 1.0 (irpina's boot copier and hook bus, unchanged: the same seven
+mod (`core`, version 2.6). It starts from core 1.0 (irpina's boot copier and hook bus, unchanged: the same seven
 sites, events and `.fast` table) and adds the frameworks DigiKit's All-in-One builds its machines on, turned into core
 services. On top of those it gives added machines a second SRC page with controls that are saved, p-lockable and LFO
 destinations.
@@ -19,7 +19,7 @@ On its own it changes nothing the unit does. Mods that use it:
 
 ```
 python -m elekloader.patch --stock Digitakt_II_OS1.17.syx \
-  --mod elemods/core-2.4.elemod --mod <a mod>.elemod --out Digitakt_II_mods.syx
+  --mod elemods/core-2.6.elemod --mod <a mod>.elemod --out Digitakt_II_mods.syx
 ```
 
 You need an elekloader with `sharc_raw` support for the Digitakt II (the `dt2-sharc-raw` branch of
@@ -37,6 +37,7 @@ resulting .syx: it contains Elektron's OS.
 | DSP `core_dsp_voices` | `{type, pc}` (list, 16) | the voices of that machine type render with the mod's DSP routine (DigiKit's dsp-inline ABI) |
 | DSP `core_mf_selector` | 4 bytes at index = type | the DSP's sample-renderer selector for the type (a machine gives its clone's) |
 | `core_machine_row(type)` | function | an added type's row, its flags at +52 |
+| `core_trig_*`, `core_plock_*` | functions (`core/pattern.h`) | the active pattern's trigs, their notes (NOTE, VEL, LEN locks) and parameter locks, read and edited through the firmware's own pattern editors (below) |
 
 Machine flags (`struct core_machine_dt2` +12): bit 0 one SRC page; bit 1 the machine's voices may be shared by a
 POLY mode; bit 2 a second SRC page; bit 3 knob H is the machine's own parameter, not LEV.
@@ -68,6 +69,22 @@ take over:
 - **DSP**: the frame builder copies 69 and 70 to the per-track halfwords 10 and 11, and 28-30 to halfwords 13-15 (the
   builder zeroes 3-5 for sample machines).
 
+## The pattern service
+
+`core/pattern.h` declares it; [docs/PATTERN.md](docs/PATTERN.md) has the layout it reads.
+
+| function | does |
+|---|---|
+| `core_trig_get(track, step)`, `core_trig_set(track, step, on)` | is there a trig; place or remove one as a trig key in GRID RECORDING does (a new trig takes the track's defaults; a removed one loses its notes and locks) |
+| `core_trig_notes(track, step, notes, max)`, `core_trig_set_notes(track, step, notes, n)` | a trig's notes, `{note, vel, len, flag}`, 0xff for the track's; a trig the panel places has four |
+| `core_trig_lock(track, step, which, value)` | one NOTE (0), VEL (1) or LEN (2) lock, as the TRIG page sets it; 0xff clears |
+| `core_plock_get / set(track, step, index, value)`, `core_plock_clear(track, step)`, `core_plock_count` | a parameter lock of value index 0-70, 8.8 (high byte = the value as the sound stores it); a pattern has 80 slots |
+| `core_pattern()`, `core_pattern_obj()`, `core_track_obj(track)`, `core_track_len(track)` | the active pattern's bytes, the firmware's objects for it and its tracks, a track's length |
+
+Tracks are 0-15, steps 0-127. The writers call the firmware's editors (the step-flag, trig-note and
+parameter-lock routines the panel uses), so the records, slots, counts and step flags stay as the firmware keeps
+them. Call them from the UI side (`ev_tick`, `ev_key`, `ev_enc`, `ev_draw`), not from the sequencer's fire hook.
+
 ## Versions
 
 - **2.1**: the second SRC page; values 69 and 70 saved, lockable and LFO destinations (`storage.s`).
@@ -77,6 +94,11 @@ take over:
 - **2.4**: stock splits each audio track's value 28 into 29 and 30 (bank and slot) around the per-frame parameter
   update and joins them back, cutting any other value 28 to its low 10 bits; a machine with its own page 2 now keeps
   28-30 as they are. Checked in the emulator; not yet heard on a unit.
+- **2.5**: a machine with its own knob H (flag bit 3) but no page 2 also keeps halfwords 10-15 as its own values
+  (the clone-6 slice copy skips them).
+- **2.6**: the pattern service (`pattern.c`, `pattern.h`). Checked in the emulator: a trig placed, NOTE, VEL and LEN
+  locked and a TUNE lock set, changed and cleared write the same bytes the panel does; out-of-range calls are
+  refused.
 
 Known: on the SRC page a trig key picks a sample and turns the track into ONESHOT, as on the stock OS.
 
@@ -84,7 +106,7 @@ Known: on the SRC page a trig key picks a sample and turns the track into ONESHO
 
 | path | what |
 |---|---|
-| `core/` | the sources: `core.s`, `settings.s`, `fast.s`, `personalize.s`, `boot.s` (core 1.0), `machines.s`, `params.s`, `knobs.s`, `storage.s`, `mod.json`, `sharc_raw.json` and DigiKit's `dsp-inline-dsp.dko.json` |
+| `core/` | the sources: `core.s`, `settings.s`, `fast.s`, `personalize.s`, `boot.s` (core 1.0), `machines.s`, `params.s`, `knobs.s`, `storage.s`, `pattern.c` and `pattern.h`, `mod.json`, `sharc_raw.json` and DigiKit's `dsp-inline-dsp.dko.json` |
 | `docs/PATTERN.md` | the 1.17 pattern: tracks, trig records (NOTE, VEL, LEN locks) and parameter-lock slots |
 | `tools/build_core.py` | writes `core/mod.json` and `core/sharc_raw.json` from your stock file and DigiKit's 1.17 anchors |
 | `elemods/` | the built core |

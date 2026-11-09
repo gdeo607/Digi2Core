@@ -85,6 +85,7 @@ Known: on the SRC page a trig key picks a sample and turns the track into ONESHO
 | path | what |
 |---|---|
 | `core/` | the sources: `core.s`, `settings.s`, `fast.s`, `personalize.s`, `boot.s` (core 1.0), `machines.s`, `params.s`, `knobs.s`, `storage.s`, `mod.json`, `sharc_raw.json` and DigiKit's `dsp-inline-dsp.dko.json` |
+| `docs/PATTERN.md` | the 1.17 pattern: tracks, trig records (NOTE, VEL, LEN locks) and parameter-lock slots |
 | `tools/build_core.py` | writes `core/mod.json` and `core/sharc_raw.json` from your stock file and DigiKit's 1.17 anchors |
 | `elemods/` | the built core |
 

@@ -22,9 +22,9 @@ the panel calls (below), and checked in the emulator by diffing the pattern whil
 
 | offset | what |
 |---|---|
-| `2 * step` | the step's word: bit 0 trig, bit 7 and up flags (a trig placed from the panel is `0x0381`) |
+| `2 * step` | the step's word: bit 0 trig, bits 7-10 trig types (bit 7 SYN: it plays a note), bits 11-14 their overrides of the track's word at 1154 (a trig the panel places is `0x0381`, a trigless lock trig `0x7801`) |
 | 256, 384, 512 + step | per-step locks of track settings the step builder uses, signed; -1 the track's own (1161, 1162, 1163) |
-| 640, 768, 896 + step | the step's trig condition arguments; 896 = -1 no condition (the track's 1168) |
+| 640, 768, 896 + step | the step's trig condition; 896 = -1 none (the track's 1168) |
 | 1024 + step | the step's sound lock, signed; -1 none |
 | 1152 VEL, 1153 LEN, 1157 NOTE | the track's defaults (LEN: 14 = 1/16, 127 = INF) |
 
@@ -39,7 +39,7 @@ Placing a trig takes four records from the bitmap and chains them from the step'
 | 2 | NOTE lock, 0xff none (set on the first record only) |
 | 3 | VEL lock, 0xff none (set on all four) |
 | 4 | LEN lock, 0xff none (set on all four) |
-| 5 | 0; the step builder skips a record whose byte 5 is negative |
+| 5 | micro timing, signed, 0 on the step (LEFT / RIGHT with the trig held); a note before its step is played by the step before |
 
 The fire event carries the pattern's record base at +28 and the record index at +32 (-1 when the step has none,
 and then +38..+41 are the track's NOTE, VEL, LEN and 0).
@@ -65,7 +65,7 @@ the track's 71 values and copies `{index, value}` pairs for each slot that has a
 
 The active pattern's own number is the long at +121736.
 
-Not known yet: what bytes 2-4 of records 2-4 hold when a trig has more than one note, and the step word's flag bits.
+Not known yet: what bytes 2-4 of records 2-4 hold when a trig has more than one note, and bit 4 of the step word (set on odd steps of an empty pattern).
 
 Emulator note: a turn while a trig is held sets the lock at the current value (later turns do not move it), and
 the emulator stops with exception vector 5 a few beats into MIDI clock, on the stock OS as well.

@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 5292,
+   "len": 5432,
    "parts": [
     [
      "hex",
@@ -770,6 +770,56 @@
      12
     ],
     [
+     "stock",
+     "0x400336f4",
+     8
+    ],
+    [
+     "hex",
+     "262f001c7a01"
+    ],
+    [
+     "stock",
+     "0x4000ef1a",
+     8
+    ],
+    [
+     "hex",
+     "ca83080300006660"
+    ],
+    [
+     "stock",
+     "0x400e6872",
+     8
+    ],
+    [
+     "hex",
+     "7ffe62542f042f024eb900000000508f4a806744700fb082653e4eb9000000004a8867344aaf002056c0223c000000844c012800"
+    ],
+    [
+     "stock",
+     "0x400177e0",
+     8
+    ],
+    [
+     "hex",
+     "2f04487028704eb9400597c84fef00102005"
+    ],
+    [
+     "stock",
+     "0x4000388c",
+     10
+    ],
+    [
+     "hex",
+     "7aff2005"
+    ],
+    [
+     "stock",
+     "0x4000388c",
+     10
+    ],
+    [
      "hex",
      "4feffff4700f48d7040c207c4316501c262f001c2450b0af001065000092202f00140c80000000806400008420104a80677c202f0010ef88d0af0014d08041f20800d1fc00012a5075d00c8200001fff625c4a836f58226f00184280720658894c021800068200009d285280204141e86a50d1ca13680002fffc13680003fffd13680004fffe13680005ffff75f22a000c8200001fff620cb08367080c800000200066b8"
     ],
@@ -1402,7 +1452,7 @@
   ],
   "core_plock_clear": [
    ".run",
-   5152
+   5292
   ],
   "mf_list_buf": [
    ".bss",
@@ -1434,7 +1484,7 @@
   ],
   "core_plock_count": [
    ".run",
-   5230
+   5370
   ],
   "mf_clone6": [
    ".run",
@@ -1450,7 +1500,7 @@
   ],
   "core_trig_notes": [
    ".run",
-   4390
+   4530
   ],
   "st_load": [
    ".bss",
@@ -1490,7 +1540,7 @@
   ],
   "core_trig_lock": [
    ".run",
-   4720
+   4860
   ],
   "mf_clone2": [
    ".run",
@@ -1514,7 +1564,7 @@
   ],
   "core_plock_get": [
    ".run",
-   4894
+   5034
   ],
   "mf_clone3": [
    ".run",
@@ -1538,7 +1588,7 @@
   ],
   "core_plock_set": [
    ".run",
-   5024
+   5164
   ],
   "pf_table": [
    ".bss",
@@ -1578,7 +1628,7 @@
   ],
   "core_trig_set_notes": [
    ".run",
-   4576
+   4716
   ],
   "core_pattern_obj": [
    ".run",
@@ -1587,6 +1637,10 @@
   "pf_t2": [
    ".run",
    3302
+  ],
+  "core_step_flags": [
+   ".run",
+   4390
   ],
   "core_track_obj": [
    ".run",
@@ -1681,6 +1735,7 @@
   "core_plock_set",
   "core_settings",
   "core_split28",
+  "core_step_flags",
   "core_store_boot",
   "core_tick",
   "core_track_len",
@@ -2234,49 +2289,63 @@
   ],
   [
    ".run",
-   4612,
+   4438,
    "abs32",
    "sec:.run",
    4164
   ],
   [
    ".run",
-   4630,
+   4456,
    "abs32",
    "sec:.run",
    3958
   ],
   [
    ".run",
-   4764,
-   "abs32",
-   "sec:.run",
-   4390
-  ],
-  [
-   ".run",
-   4838,
-   "abs32",
-   "sec:.run",
-   4576
-  ],
-  [
-   ".run",
-   5054,
+   4752,
    "abs32",
    "sec:.run",
    4164
   ],
   [
    ".run",
-   5086,
+   4770,
    "abs32",
    "sec:.run",
    3958
   ],
   [
    ".run",
-   5184,
+   4904,
+   "abs32",
+   "sec:.run",
+   4530
+  ],
+  [
+   ".run",
+   4978,
+   "abs32",
+   "sec:.run",
+   4716
+  ],
+  [
+   ".run",
+   5194,
+   "abs32",
+   "sec:.run",
+   4164
+  ],
+  [
+   ".run",
+   5226,
+   "abs32",
+   "sec:.run",
+   3958
+  ],
+  [
+   ".run",
+   5324,
    "abs32",
    "sec:.run",
    3958
@@ -4513,7 +4582,7 @@
    "params.s": "5c76635a93887463ac235136ad46bd0afeea4dd01e812c447d0ada9b5a4c52ec",
    "knobs.s": "17622768cd4d0c4d1da08d0ae4187746d7cb7d8de1933890acb56a76fa806871",
    "storage.s": "48d5d6f80dcac84166dd31670466ac8643ead5a623b477433e0df7f20ea12791",
-   "pattern.c": "41e4fbcec96eb1570222979a5f4bc6f1b3b7bb2c98f20af57ece80995c6d4d07"
+   "pattern.c": "82b167b2e7e330bed5d73171dd8a58c572720abf49a5a919a13d0c5da4bd0fd8"
   },
   "sharc_raw_sha256": "9984dcf522740b6a1da8347eccbb5524550579171d5034d36492c15cdd103502"
  },

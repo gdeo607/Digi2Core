@@ -35,7 +35,9 @@
 #define TRACKOBJ_STRIDE 132
 
 struct core_note {                      /* one of a trig's notes; 0xff: the track's */
-    uint8_t note, vel, len, flag;       /* flag: 0; the step builder skips a note whose flag is negative */
+    uint8_t note, vel, len;
+    int8_t micro;                       /* micro timing (record byte 5), 0 on the step; a note before its step
+                                         * (negative) is played by the step before */
 };
 
 struct fw_vector { const void *begin, *end, *cap; };
@@ -115,6 +117,19 @@ int core_trig_set(int track, int step, int on)
     return 0;
 }
 
+/* Set (on) or clear a trig's other step flags, as the TRIG page's trig types do: bits 7-10 the trig types (bit 7
+ * SYN: the trig plays a note), bits 11-14 their overrides of the track's defaults (the word at +1154); a step
+ * whose bit 11 is clear takes bit 7 from the track. Not bit 0 (core_trig_set). The step must have a trig.
+ * 0 or -1. */
+int core_step_flags(int track, int step, int flags, int on)
+{
+    uint8_t *tv;
+    if ((flags & 1) || (flags & ~0x7fff) || !flags || !core_trig_get(track, step) || !(tv = core_track_obj(track)))
+        return -1;
+    ((fw4)FW_STEP_FLAGS)((uint32_t)tv, (uint32_t)step, (uint32_t)flags, on ? 1 : 0);
+    return 0;
+}
+
 /* A trig's notes, at most max; returns how many (0: no trig, or no notes) */
 int core_trig_notes(int track, int step, struct core_note *out, int max)
 {
@@ -129,7 +144,7 @@ int core_trig_notes(int track, int step, struct core_note *out, int max)
         out[n].note = r[2];
         out[n].vel = r[3];
         out[n].len = r[4];
-        out[n].flag = r[5];
+        out[n].micro = (int8_t)r[5];
         n++;
         rec = rd16(pat + REC_NEXT + 2 * rec);
     }

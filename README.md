@@ -76,7 +76,8 @@ take over:
 | function | does |
 |---|---|
 | `core_trig_get(track, step)`, `core_trig_set(track, step, on)` | is there a trig; place or remove one as a trig key in GRID RECORDING does (a new trig takes the track's defaults; a removed one loses its notes and locks) |
-| `core_trig_notes(track, step, notes, max)`, `core_trig_set_notes(track, step, notes, n)` | a trig's notes, `{note, vel, len, flag}`, 0xff for the track's; a trig the panel places has four |
+| `core_step_flags(track, step, flags, on)` | a trig's trig types (bits 7-10, bit 7 SYN: it plays a note) and their overrides of the track's defaults (bits 11-14); a lock trig is SYN off with its override on |
+| `core_trig_notes(track, step, notes, max)`, `core_trig_set_notes(track, step, notes, n)` | a trig's notes, `{note, vel, len, micro}` (0xff for the track's; micro timing 0 on the step); a trig the panel places has four |
 | `core_trig_lock(track, step, which, value)` | one NOTE (0), VEL (1) or LEN (2) lock, as the TRIG page sets it; 0xff clears |
 | `core_plock_get / set(track, step, index, value)`, `core_plock_clear(track, step)`, `core_plock_count` | a parameter lock of value index 0-70, 8.8 (high byte = the value as the sound stores it); a pattern has 80 slots |
 | `core_pattern()`, `core_pattern_obj()`, `core_track_obj(track)`, `core_track_len(track)` | the active pattern's bytes, the firmware's objects for it and its tracks, a track's length |

@@ -6,7 +6,8 @@
 #include <stdint.h>
 
 struct core_note {                      /* one of a trig's notes (a trig the panel places has four); 0xff: the track's */
-    uint8_t note, vel, len, flag;       /* NOTE (first note), VEL and LEN locks; flag 0 */
+    uint8_t note, vel, len;             /* NOTE (first note), VEL and LEN locks */
+    int8_t micro;                       /* micro timing, 0 on the step (LEFT / RIGHT with the trig held) */
 };
 
 uint8_t *core_pattern(void);            /* the active pattern's bytes (docs/PATTERN.md), or 0 */
@@ -16,6 +17,7 @@ int core_track_len(int track);          /* the track's length in steps */
 
 int core_trig_get(int track, int step);                         /* 1: the step has a trig */
 int core_trig_set(int track, int step, int on);                 /* place or remove a trig (a trig key in GRID RECORDING) */
+int core_step_flags(int track, int step, int flags, int on);    /* trig types 7-10 (7 SYN), overrides 11-14 */
 int core_trig_notes(int track, int step, struct core_note *out, int max);   /* the trig's notes; how many */
 int core_trig_set_notes(int track, int step, const struct core_note *notes, int n);  /* 1-4 notes */
 int core_trig_lock(int track, int step, int which, int value);  /* which: 0 NOTE, 1 VEL, 2 LEN; 0xff clears */

@@ -10,6 +10,9 @@ On its own it changes nothing the unit does. Mods that use it:
 
 - [Digi2MacroOSC](https://github.com/gdeo607/Digi2MacroOSC): MACRO, a macro-oscillator machine.
 - [Digi2ElixirPotionsDRUM](https://github.com/gdeo607/Digi2ElixirPotionsDRUM): ELIXIR, a drum-synthesis machine with two SRC pages.
+- [Digi2String](https://github.com/gdeo607/Digi2String): STRING, Alez22's Karplus-Strong string machine, adapted.
+- [Digi2Sophie](https://github.com/gdeo607/Digi2Sophie): SOPHIE, Matt Estela's metallic percussion (with soejrd's PIPE and BOOM), adapted.
+- [Digi2Digiseq](https://github.com/gdeo607/Digi2Digiseq): DIGISEQ, Robbie's per-track sequencers (SNAKE, 185, ARP, PRINT), adapted.
 
 > Unofficial and unsupported, and experimental. Flashing modified firmware is at your own risk; the stock OS always
 > recovers the unit (hold FUNC while powering on, TRIG 4, then send the stock .syx over MIDI). This repository

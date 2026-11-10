@@ -138,6 +138,17 @@ def main():
     assert at(0x40050b46, 6) == bytes.fromhex('47f9400da004')
     ptr(0x40050b48, 'st_list_end')
     sites.append({'addr': '0x4000053e', 'stock': '4ebaff1c4ebaff6e', 'op': 'jsr', 'target': 'core_boot_late'})
+    # core 2.7: ev_midi_cc at the CC apply every track kind's CC method ends in, and CC 16-23 to an added
+    # machine's SRC knobs at the CC map lookup (machines.s mf_cclookup)
+    assert at(0x4003ce14, 8) == bytes.fromhex('4e56ffe448d70c3c')
+    sites.append({'addr': '0x4003ce14', 'stock': '4e56ffe448d70c3c', 'op': 'jmp', 'target': 'core_midi_cc'})
+    assert at(0x400dab9e, 8) == bytes.fromhex('4feffff448d7001c')
+    sites.append({'addr': '0x400dab9e', 'stock': '4feffff448d7001c', 'op': 'jmp', 'target': 'mf_cclookup'})
+    # core 2.7: ev_live_note at the stock note-on and note-off (the MIDI router's per-track calls, the UI's)
+    assert at(0x401200f2, 10) == bytes.fromhex('4e56ff88707f48d73cfc')
+    sites.append({'addr': '0x401200f2', 'stock': '4e56ff88707f48d73cfc', 'op': 'jmp', 'target': 'core_note_on'})
+    assert at(0x401204ec, 10) == bytes.fromhex('4e56ff84707f48d7047c')
+    sites.append({'addr': '0x401204ec', 'stock': '4e56ff84707f48d7047c', 'op': 'jmp', 'target': 'core_note_off'})
     sites.sort(key=lambda s: int(s['addr'], 16))
 
     defsym = dict(CORE10_DEFSYM)    # the tables are built at 0x4000053e (boot.s core_boot_late), not in .boot
@@ -153,7 +164,9 @@ def main():
         'PF_T1': t1, 'PF_T2': adr('cf.params.t2') + 4, 'PF_DRAWONE': adr('cf.params.drawone'),
         'PF_RANDONE': adr('cf.params.randone'), 'PF_RAND': adr('cf.params.rand'), 'PF_WRITE': adr('cf.params.write'),
         'KNOB_STOCK': 0x40069b8e, 'ST_SAVE': 0x40213a50, 'ST_LOAD': 0x40213b64, 'MO_CODEAT': 0x40017cd4, 'FRAME_HI_RET': 0x4002ebe4,
-        'FILLRECT': 0x401131ae, 'TEXTF': 0x40113d84, 'FONT5': 0x402a9be0})
+        'FILLRECT': 0x401131ae, 'TEXTF': 0x40113d84, 'FONT5': 0x402a9be0,
+        'MIDI_CC_APPLY': 0x4003ce14, 'MF_CCLOOKUP': 0x400dab9e,
+        'NOTE_ON': 0x401200f2, 'NOTE_OFF': 0x401204ec})
     for i in (0, 1, 2, 3, 4, 5, 6):
         defsym['MF_C%d' % i] = adr('cf.machines.clone.%d' % i)
         if 'cf.machines.clone.%d.alt' % i in A:
@@ -175,13 +188,15 @@ def main():
         'defsym': defsym,
         'subscribe': [{'event': 'ev_tick', 'fn': 'core_fastcopy', 'order': 0},
                       {'event': 'ev_tick', 'fn': 'core_sdk_tick', 'order': 10},
+                      {'event': 'ev_midi_cc', 'fn': 'core_sdk_cc', 'order': 90},
+                      {'event': 'ev_live_note', 'fn': 'core_sdk_live_note', 'order': 50},
                       {'event': 'ev_draw', 'fn': 'mo_draw', 'order': 99}],
         # core 2.7: the SDK machines' shared codes 327-338 draw through core_sdk_knob
         'contribute': [{'to': 'core_knobs', 'order': 90, 'data': '%08x%08x00000000' % (327, 338),
                         'relocs': [[8, 'abs32', 'sym:core_sdk_knob', 0]]}],
         'collections': {'ev_tick': 4, 'ev_draw': 4, 'ev_key': 4, 'ev_enc': 4, 'ev_settings': 4,
                         'ev_personalize': 4, 'core_fast': 16, 'core_machines': 4, 'core_params': 4,
-                        'core_knobs': 12, 'sdk_alpha_machines': 4},
+                        'core_knobs': 12, 'sdk_alpha_machines': 4, 'ev_midi_cc': 4, 'ev_live_note': 4},
         'sharc_raw': 'sharc_raw.json',
         'sites': sites,
     }
@@ -214,7 +229,11 @@ def main():
             # core 2.7: the SDK machines' voices (sdk_dsp.s, sdk_dsp.c; DigiKit's pk_build makes sdk-dsp.dko.json)
             {'dko': 'sdk-dsp.dko.json', 'name': 'sdk-dsp',
              'externs': {'fw_frame.': '0x%x' % externs['_fw_frame'], 'fw_trig_latch.': '0x%x' % externs['_fw_trig_latch'],
-                         'fw_records.': '0x%x' % externs['_fw_records']}}],
+                         'fw_records.': '0x%x' % externs['_fw_records'],
+                         # the DSPI transfer's landing rings (DigiKit's pk_dsplink RINGS: the frame with its tail) and
+                         # the type cache: the CC mailbox (sdk.c core_sdk_cc)
+                         'fw_rx0.': '0x264220', 'fw_rx1.': '0x265220',
+                         'fw_type_cache.': '0x%x' % externs['_fw_type_cache']}}],
         'tables': {
             'core_dsp_voices': {'kind': 'list', 'row': 8, 'max': 16, 'end': '00' * 8},
             'core_mf_selector': {'kind': 'indexed', 'row': 4, 'rows': MF_LAST + 1,

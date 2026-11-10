@@ -734,8 +734,19 @@ mo_row_of:
 
 | ---- the code of knob k on the SRC page (SourcePageView vfunc 47, stock 0x40017cd4: 4(sp) = view, 8(sp) = k):
 | page 2 of an added machine answers with its f2[k]. Every other case is the stock function.
+| core 2.7: an SDK machine's hidden knob answers 0, the stock's "no knob" (core_sdk_shown, sdk.c): the page
+| draws nothing there and its encoder edits nothing.
         .globl  mo_codeat
 mo_codeat:
+        move.l  8(%sp), -(%sp)
+        move.l  8(%sp), -(%sp)
+        bsr.s   mo_codeat0
+        addq.l  #8, %sp
+        move.l  %d0, -(%sp)
+        jsr     core_sdk_shown
+        addq.l  #4, %sp
+        rts
+mo_codeat0:
         movea.l 4(%sp), %a0
         bsr.w   mo_row_of
         beq.s   9f
@@ -754,6 +765,34 @@ mo_codeat:
         move.l  O_F2(%a1, %d0.l*4), %d0
         rts
 9:      jmp     MO_CODEAT
+
+| ---- MIDI CC to an added machine's knobs (core 2.7). The CC map lookup (stock 0x400dab9e: 4(sp) track, 8(sp)
+| the track's machine type, 12(sp) its filter type, 16(sp) the CC -> d0 the parameter code, 0 none) maps a stock
+| machine's CC 16-23 to its SRC knobs A-H and nothing else of an added type's (DigiKit's finding 02). Here CC
+| 16-23 on track 0-15 of an added type answer its SRC page 1 knob A-H (descriptor field 0-7), as the stock's;
+| an empty field, or any other CC, track or type, takes the stock lookup.
+        .globl  mf_cclookup
+mf_cclookup:
+        move.l  4(%sp), %d0
+        moveq   #16, %d1
+        cmp.l   %d1, %d0
+        bcc.s   9f                      | the FX track (16), or no track
+        move.l  16(%sp), %d1
+        subi.l  #16, %d1
+        moveq   #8, %d0
+        cmp.l   %d0, %d1
+        bcc.s   9f                      | not CC 16-23
+        move.l  8(%sp), %d0
+        subi.l  #MF_FIRST, %d0
+        cmpi.l  #MF_N, %d0
+        bcc.s   9f                      | a stock type
+        bsr.w   mf_row
+        move.l  O_F0(%a0, %d1.l*4), %d0
+        beq.s   9f
+        rts
+9:      lea     -12(%sp), %sp           | the displaced instructions
+        movem.l %d2-%d4, (%sp)
+        jmp     MF_CCLOOKUP + 8
 
 | ---- ev_draw: the page marker of a two-page machine, over the right of the SRC page's header ("1/2", "2/2").
         .globl  mo_draw

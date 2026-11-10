@@ -40,6 +40,10 @@ resulting .syx: it contains Elektron's OS.
 | DSP `core_dsp_voices` | `{type, pc}` (list, 16) | the voices of that machine type render with the mod's DSP routine (DigiKit's dsp-inline ABI) |
 | DSP `core_mf_selector` | 4 bytes at index = type | the DSP's sample-renderer selector for the type (a machine gives its clone's) |
 | `core_machine_row(type)` | function | an added type's row, its flags at +52 |
+| `sdk_alpha_machines` | pointer to a `struct elek_machine` (elekloader's SDK: `docs/SDK.md`; its builder adds them) | an SDK machine (2.7): a machine type 7-23 with its pages, labels, hiding, glyphs, knob defaults, its `render` on the DSP (the Digitone II's SHARC assembly), MIDI CCs and mono play |
+| `ev_midi_cc` | `int f(int track, int cc, int value, int flags)` | each MIDI CC the unit receives for a track (0-15, 16 the FX track), before the stock applies it; nonzero takes it (2.7). `flags` is 0 |
+| `ev_live_note` | `int f(int track, int note, int vel, int on, int source)` | a note played live on a track (MIDI notes, KEYBOARD mode, the preview), before its voice; nonzero takes it: the stock neither counts nor plays (or releases) it. A release has `vel` 0; `source` 0x40 the panel, else the MIDI port (2.7). The sequencer's trigs do not pass here |
+| `fw_note_on(track, note, vel, source, 0, -1, -1, -1, -1)`, `fw_note_off(track, note, source)` | functions (`core.s`) | the stock note routines past `ev_live_note`; each counts the key, so pair them (2.7) |
 | `core_trig_*`, `core_plock_*` | functions (`core/pattern.h`) | the active pattern's trigs, their notes (NOTE, VEL, LEN locks) and parameter locks, read and edited through the firmware's own pattern editors (below) |
 
 Machine flags (`struct core_machine_dt2` +12): bit 0 one SRC page; bit 1 the machine's voices may be shared by a
@@ -107,13 +111,22 @@ them. Call them from the UI side (`ev_tick`, `ev_key`, `ev_enc`, `ev_draw`), not
   unit stopped with an illegal-instruction exception right after boot (the emulator ran the zeros as no-ops). They
   are code again; do not flash a 2.4, 2.5 or 2.6 build.
 
+- **2.7** (work in progress, on the `core-2.7-sdk` branch): elekloader's SDK machines (`sdk.c`, `sdk_machine.c`,
+  `sdk_dsp.c`, `sdk_dsp.s`). A hidden knob answers "no knob" on the SRC page, so its encoder edits nothing.
+  `ev_midi_cc` and `ev_live_note`; MIDI CC 16-23 turn an added machine's SRC page 1 knobs A-H, as the stock map does
+  for its own machines (`mf_cclookup`), and `core_params`' rows carry no LSB CC, as the stock's 7-bit rows. Each CC
+  and a mono SDK machine's legato bend reach the DSP in a mailbox in the frame's tail (halfwords 1200-1249, past the
+  part the stock reads; the DSP reads it in its landing rings, as DigiKit's `core/dsp-link` does). Checked in the
+  emulator (the ColdFire side) and on DigiKit's SHARC core (the DSP side, against the C on the host); not heard on
+  a unit.
+
 Known: on the SRC page a trig key picks a sample and turns the track into ONESHOT, as on the stock OS.
 
 ## Layout
 
 | path | what |
 |---|---|
-| `core/` | the sources: `core.s`, `settings.s`, `fast.s`, `personalize.s`, `boot.s` (core 1.0), `machines.s`, `params.s`, `knobs.s`, `storage.s`, `pattern.c` and `pattern.h`, `mod.json`, `sharc_raw.json` and DigiKit's `dsp-inline-dsp.dko.json` |
+| `core/` | the sources: `core.s`, `settings.s`, `fast.s`, `personalize.s`, `boot.s` (core 1.0), `machines.s`, `params.s`, `knobs.s`, `storage.s`, `pattern.c` and `pattern.h`, the SDK machines (`sdk.c`, `sdk_machine.c`, `sdk_machine.h`, `dev.h`; on the DSP `sdk_dsp.c`, `sdk_dsp.s`, built into `sdk-dsp.dko.json`), `mod.json`, `sharc_raw.json` and DigiKit's `dsp-inline-dsp.dko.json` |
 | `docs/PATTERN.md` | the 1.17 pattern: tracks, trig records (NOTE, VEL, LEN locks) and parameter-lock slots |
 | `tools/build_core.py` | writes `core/mod.json` and `core/sharc_raw.json` from your stock file and DigiKit's 1.17 anchors |
 | `elemods/` | the built core |

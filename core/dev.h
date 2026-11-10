@@ -10,6 +10,17 @@
 #define SDK_ALPHA_MACHINES 16
 #define dev_fillrect dt2_fillrect
 
+/* Mono machines (core 2.7): the tracks, each one's machine (its type, or -1) and core's stock note routines
+ * past ev_live_note (core.s). */
+#define SDK_ALPHA_TRACKS 16
+extern int32_t core_track_type(uint32_t t);
+#define dev_track_machine(t) core_track_type(t)
+extern void fw_note_on(int32_t track, int32_t note, int32_t vel, int32_t source, int32_t, int32_t, int32_t,
+                       int32_t, int32_t);
+extern void fw_note_off(int32_t track, int32_t note, int32_t source);
+#define dev_note_on(t, n, v, s) fw_note_on((t), (n), (v), (s), 0, -1, -1, -1, -1)
+#define dev_note_off(t, n, s) fw_note_off((t), (n), (s))
+
 extern void dt2_fillrect(void *bmp, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t on);
 extern const struct elek_machine *const sdk_alpha_machines[];   /* the table, ending in 0 */
 

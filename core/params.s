@@ -243,24 +243,24 @@ pf_randone:
         movem.l %d2-%d5, (%sp)
         jmp     PF_RANDONE + 8
 
-| slot -> {value index, MIDI CC << 16, per-machine key}: the eight SRC fields (DigiKit's), then the four
+| slot -> {value index, MIDI CC << 16 | 0xffff (no LSB CC, as the stock's 7-bit rows; core 2.7), per-machine key}: the eight SRC fields (DigiKit's), then the four
 | page-2 slots of core 2.1: 8 = index 29 and 9 = index 30 (the stock BANK and SLOT places: CC 24 and 19, keys
 | 0x89 and 0x88), 10 = index 69 and 11 = index 70 (free on audio tracks: no CC, no key)
         .balign 4
         .equ    PF_SLOTS, 12
 pf_slots:
-        .long   25, 0x100000, 0x80
-        .long   26, 0x110000, 0x81
-        .long   27, 0x120000, 0x82
-        .long   28, 0xffff0000, 0x83
-        .long   31, 0x140000, 0x84
-        .long   32, 0x150000, 0x85
-        .long   33, 0x160000, 0x86
-        .long   34, 0x170000, 0x87
-        .long   29, 0x180000, 0x89
-        .long   30, 0x130000, 0x88
-        .long   69, 0xffff0000, -1
-        .long   70, 0xffff0000, -1
+        .long   25, 0x10ffff, 0x80
+        .long   26, 0x11ffff, 0x81
+        .long   27, 0x12ffff, 0x82
+        .long   28, 0xffffffff, 0x83
+        .long   31, 0x14ffff, 0x84
+        .long   32, 0x15ffff, 0x85
+        .long   33, 0x16ffff, 0x86
+        .long   34, 0x17ffff, 0x87
+        .long   29, 0x18ffff, 0x89
+        .long   30, 0x13ffff, 0x88
+        .long   69, 0xffffffff, -1
+        .long   70, 0xffffffff, -1
 
         .section .bss
         .balign 4

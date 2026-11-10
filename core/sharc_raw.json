@@ -43,7 +43,10 @@
    "externs": {
     "fw_frame.": "0x2558dc",
     "fw_trig_latch.": "0x24f0cc",
-    "fw_records.": "0x2412cc"
+    "fw_records.": "0x2412cc",
+    "fw_rx0.": "0x264220",
+    "fw_rx1.": "0x265220",
+    "fw_type_cache.": "0x255970"
    }
   }
  ],

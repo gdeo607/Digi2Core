@@ -118,3 +118,5 @@ _sk_leave:
 .PKBSS _sk_stack, 4096;                 // the C stack (written before it is read)
 .GLOBAL sdk_dsp_state.;
 .PKBSS sdk_dsp_state., 8192;            // 32 voices x 256 bytes (sdk_dsp.c)
+.GLOBAL sdk_dsp_cc.;
+.PKBSS sdk_dsp_cc., 8192;               // 16 tracks x 128 CCs (sdk_dsp.c)

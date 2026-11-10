@@ -63,6 +63,10 @@
   "FILLRECT": "0x401131ae",
   "TEXTF": "0x40113d84",
   "FONT5": "0x402a9be0",
+  "MIDI_CC_APPLY": "0x4003ce14",
+  "MF_CCLOOKUP": "0x400dab9e",
+  "NOTE_ON": "0x401200f2",
+  "NOTE_OFF": "0x401204ec",
   "MF_C0": "0x4005fbec",
   "MF_C0A": "0x4005fcd4",
   "MF_C1": "0x4005f8f8",
@@ -89,9 +93,34 @@
    "order": 10
   },
   {
+   "event": "ev_midi_cc",
+   "fn": "core_sdk_cc",
+   "order": 90
+  },
+  {
+   "event": "ev_live_note",
+   "fn": "core_sdk_live_note",
+   "order": 50
+  },
+  {
    "event": "ev_draw",
    "fn": "mo_draw",
    "order": 99
+  }
+ ],
+ "contribute": [
+  {
+   "to": "core_knobs",
+   "order": 90,
+   "data": "000001470000015200000000",
+   "relocs": [
+    [
+     8,
+     "abs32",
+     "sym:core_sdk_knob",
+     0
+    ]
+   ]
   }
  ],
  "collections": {
@@ -105,7 +134,9 @@
   "core_machines": 4,
   "core_params": 4,
   "core_knobs": 12,
-  "sdk_alpha_machines": 4
+  "sdk_alpha_machines": 4,
+  "ev_midi_cc": 4,
+  "ev_live_note": 4
  },
  "sharc_raw": "sharc_raw.json",
  "sites": [
@@ -370,6 +401,12 @@
    "op": "bytes",
    "new": "00000152",
    "kind": "data"
+  },
+  {
+   "addr": "0x4003ce14",
+   "stock": "4e56ffe448d70c3c",
+   "op": "jmp",
+   "target": "core_midi_cc"
   },
   {
    "addr": "0x4003cf96",
@@ -1150,6 +1187,12 @@
    "target": "pf_table"
   },
   {
+   "addr": "0x400dab9e",
+   "stock": "4feffff448d7001c",
+   "op": "jmp",
+   "target": "mf_cclookup"
+  },
+  {
    "addr": "0x400daea2",
    "stock": "744c",
    "op": "bytes",
@@ -1254,6 +1297,18 @@
    "target": "pf_table"
   },
   {
+   "addr": "0x401200f2",
+   "stock": "4e56ff88707f48d73cfc",
+   "op": "jmp",
+   "target": "core_note_on"
+  },
+  {
+   "addr": "0x401204ec",
+   "stock": "4e56ff84707f48d7047c",
+   "op": "jmp",
+   "target": "core_note_off"
+  },
+  {
    "addr": "0x401edd4c",
    "stock": "40069b8e",
    "op": "ptr",
@@ -1264,21 +1319,6 @@
    "stock": "40017cd4",
    "op": "ptr",
    "target": "mo_codeat"
-  }
- ],
- "contribute": [
-  {
-   "to": "core_knobs",
-   "order": 90,
-   "data": "000001470000015200000000",
-   "relocs": [
-    [
-     8,
-     "abs32",
-     "sym:core_sdk_knob",
-     0
-    ]
-   ]
   }
  ]
 }

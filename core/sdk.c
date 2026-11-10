@@ -12,7 +12,10 @@
  * knobs on no page the free slots, page 2's first. Every SDK machine shares the twelve parameter codes
  * SDK_CODE + slot: their names and value texts are the active track's machine's, as .present last left them.
  *
- * Not yet: the encoder of a hidden knob still edits it, the sound (render), mono machines and MIDI CCs. */
+ * A hidden knob has no code on the page (core_sdk_shown), so its encoder edits nothing. MIDI CCs reach the DSP
+ * through a mailbox in the frame (core_sdk_cc); CC 16-23 turn SRC page 1 knob A-H (machines.s mf_cclookup).
+ * A mono machine's track plays live keys as .play and .prio say (ev_live_note, sdk_machine.c's
+ * sdk_alpha_live_note); a legato move reaches the DSP as the track's bend in the same mailbox. */
 #include "dev.h"
 
 #define SDK_CODE 327                    /* codes 327-338: slot s is SDK_CODE + s */
@@ -34,6 +37,11 @@ typedef void (*knob_fn)(void *, void *, int, int, int, int, int, int, int, int, 
 #define UI_TRACK   (*(volatile uint8_t *)0x42936825u)           /* the active track */
 #define SOUND(t)   (KIT + 0x34 + 0x450 * (t))                    /* the kit's sound t: values at +0x14, 8.8 */
 #define SOUND_TYPE 0xa2                                         /* a sound's machine type (byte) */
+
+int32_t core_track_type(uint32_t t)
+{
+    return t < 16 && KIT ? (int8_t)SOUND(t)[SOUND_TYPE] : -1;
+}
 
 static int32_t type_of(uint32_t t)
 {
@@ -257,4 +265,67 @@ void core_sdk_knob(void *view, void *bmp, int x, int y, int code, int value, int
         FILLRECT(bmp, x - 3, y + 7, x + 21, y + 24, 0);
         sdk_alpha_blit(bmp, x + 1, y + 7, glyph);
     }
+}
+
+/* SourcePageView's code-at-knob (machines.s mo_codeat): a hidden knob of the active track's SDK machine answers
+ * 0, the stock's "no knob", so its encoder edits nothing (and the page draws nothing there). */
+int32_t core_sdk_shown(int32_t code)
+{
+    int32_t s = code - SDK_CODE;
+    uint32_t t = UI_TRACK;
+    if (s < 0 || s >= SLOTS || t >= 16 || !KIT)
+        return code;
+    const struct sdk_alpha_entry *e = sdk_alpha_find(type_of(t));
+    int32_t k = e ? knob_at[e - sdk_alpha_entries][s] : -1;
+    return k >= 0 && !sdk_alpha_visible(e, (uint32_t)k) ? 0 : code;
+}
+
+/* MIDI CCs to the DSP (ev_midi_cc): the CCs of tracks 0-15, as a mailbox in the DSPI frame's tail, which the
+ * DSP's sdk_dsp.c reads in its landing rings. The tail entries (past the 0x802-byte payload, from halfword
+ * 1026) go out in every frame with the data halves left in the transmit queue (PUSHR words at 0x80001bc0, entry
+ * k's data at + 4 k + 2; DigiKit's finding 31): halfword MB_AT is the newest CC's number n (16 bits, from 1), then
+ * MB_N entries newest first, CC n - j as (track << 8 | cc, value), then n again. Written tail first and head last,
+ * so a frame that caught a write half done has two different numbers, which the DSP refuses. */
+#define MB_AT 1200                      /* past dt2mod's 1026-1100 */
+#define MB_N 16
+#define MB_BEND (MB_AT + 2 + 2 * MB_N)  /* 16 halfwords: each track's legato bend, 1/256 semitone (signed) */
+#define PUSHR_DATA(k) (*(volatile uint16_t *)(0x80001bc2u + 4u * (k)))
+static uint16_t mb_n;
+static uint16_t mb_q[MB_N][2];
+
+int32_t core_sdk_cc(int32_t track, int32_t cc, int32_t value, int32_t flags)
+{
+    (void)flags;
+    if ((uint32_t)track >= 16 || (uint32_t)cc >= 128 || (uint32_t)value >= 128)
+        return 0;
+    uint16_t sr;
+    __asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr" : "=d"(sr) :: "memory", "cc");
+    uint16_t n = (uint16_t)(mb_n + 1);
+    mb_n = n;
+    mb_q[n % MB_N][0] = (uint16_t)(track << 8 | cc);
+    mb_q[n % MB_N][1] = (uint16_t)value;
+    PUSHR_DATA(MB_AT + 1 + 2 * MB_N) = n;
+    for (uint32_t j = 0; j < MB_N; ++j) {
+        uint16_t m = (uint16_t)(n - j);
+        PUSHR_DATA(MB_AT + 1 + 2 * j) = mb_q[m % MB_N][0];
+        PUSHR_DATA(MB_AT + 2 + 2 * j) = mb_q[m % MB_N][1];
+    }
+    PUSHR_DATA(MB_AT) = n;
+    __asm__ volatile("move.w %0,%%sr" :: "d"(sr) : "memory", "cc");
+    return 0;
+}
+
+/* ev_live_note: a mono machine's keys (sdk_alpha_live_note), then the track's legato bend to the DSP. */
+int32_t core_sdk_live_note(int32_t track, int32_t note, int32_t vel, int32_t on, int32_t source)
+{
+    int32_t taken = sdk_alpha_live_note(track, note, vel, on, source);
+    if ((uint32_t)track < 16) {
+        int32_t bend = sdk_alpha_pitch((uint32_t)track, core_track_type((uint32_t)track), 0) >> 8;
+        if (bend > 32767)
+            bend = 32767;
+        if (bend < -32768)
+            bend = -32768;
+        PUSHR_DATA(MB_BEND + track) = (uint16_t)bend;
+    }
+    return taken;
 }

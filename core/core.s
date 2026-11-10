@@ -127,7 +127,7 @@ core_draw:
 core_key:
         move.l  %a2, -(%sp)
         lea     ev_key, %a2
-        bsr.s   dispatch
+        bsr.w   dispatch
         movea.l (%sp)+, %a2
         tst.l   %d0
         bne.s   1f
@@ -137,12 +137,101 @@ core_key:
 core_enc:
         move.l  %a2, -(%sp)
         lea     ev_enc, %a2
-        bsr.s   dispatch
+        bsr.w   dispatch
         movea.l (%sp)+, %a2
         tst.l   %d0
         bne.s   1f
         jmp     ENCDISP
 1:      rts
+
+| ---- ev_midi_cc: a MIDI CC the unit received, before the stock applies it (core 2.7) ----------------------
+| At 0x4003ce14, the entry of the CC's apply (this, cc, value, track, flags): every track kind's CC method (the
+| five vtables' +0x6c, 0x401f2e4c to 0x401f306c) ends there, after the MIDI router chose the track (0-15, 16 the
+| FX track). Handlers: f(track, cc, value, flags) -> d0 nonzero takes it: the stock does not apply it (the
+| method answers 1, applied). flags is 0. The MIDI task.
+        .globl  core_midi_cc
+core_midi_cc:
+        link.w  %fp, #0
+        move.l  %a2, -(%sp)
+        lea     ev_midi_cc, %a2
+1:      move.l  (%a2)+, %d0
+        beq.s   2f
+        clr.l   -(%sp)                  | flags
+        move.l  16(%fp), -(%sp)         | value
+        move.l  12(%fp), -(%sp)         | cc
+        move.l  20(%fp), -(%sp)         | track
+        movea.l %d0, %a0
+        jsr     (%a0)
+        lea     16(%sp), %sp
+        tst.l   %d0
+        beq.s   1b
+        movea.l (%sp)+, %a2
+        unlk    %fp
+        moveq   #1, %d0
+        rts
+2:      movea.l (%sp)+, %a2
+        unlk    %fp
+        link.w  %fp, #-28               | the displaced instructions
+        movem.l %d2-%d5/%a2-%a3, (%sp)
+        jmp     MIDI_CC_APPLY + 8
+
+| ---- ev_live_note: a note played live on a track, before its voice (core 2.7) -----------------------------
+| At the stock note-on 0x401200f2 (track, note, velocity, source, 0, -1, x, -1, -1: the MIDI router's per-track
+| call, and the UI's) and note-off 0x401204ec (track, note, source). Each counts the key (0x44e08b78). The
+| sequencer's trigs do not pass here. Handlers: f(track, note, vel, on, source) -> d0 nonzero takes it: the
+| stock neither counts nor plays (or releases) it. A release comes with vel 0. fw_note_on and fw_note_off are
+| the stock routines past the event (C: fw_note_on(track, note, vel, source, 0, -1, -1, -1, -1),
+| fw_note_off(track, note, source)); each counts the key, so pair them.
+        .globl  core_note_on, core_note_off, fw_note_on, fw_note_off
+core_note_on:
+        move.l  %a2, -(%sp)             | 8(sp) track, 12 note, 16 vel, 20 source
+        lea     ev_live_note, %a2
+1:      move.l  (%a2)+, %d0
+        beq.s   2f
+        move.l  20(%sp), -(%sp)         | source
+        pea     1                       | on
+        move.l  24(%sp), -(%sp)         | vel
+        move.l  24(%sp), -(%sp)         | note
+        move.l  24(%sp), -(%sp)         | track
+        movea.l %d0, %a0
+        jsr     (%a0)
+        lea     20(%sp), %sp
+        tst.l   %d0
+        beq.s   1b
+        movea.l (%sp)+, %a2
+        moveq   #0, %d0
+        rts
+2:      movea.l (%sp)+, %a2
+fw_note_on:
+        link.w  %fp, #-120              | the displaced instructions
+        moveq   #127, %d0
+        movem.l %d2-%d7/%a2-%a5, (%sp)
+        jmp     NOTE_ON + 10
+
+core_note_off:
+        move.l  %a2, -(%sp)             | 8(sp) track, 12 note, 16 source
+        lea     ev_live_note, %a2
+1:      move.l  (%a2)+, %d0
+        beq.s   2f
+        move.l  16(%sp), -(%sp)         | source
+        clr.l   -(%sp)                  | on
+        clr.l   -(%sp)                  | vel
+        move.l  24(%sp), -(%sp)         | note
+        move.l  24(%sp), -(%sp)         | track
+        movea.l %d0, %a0
+        jsr     (%a0)
+        lea     20(%sp), %sp
+        tst.l   %d0
+        beq.s   1b
+        movea.l (%sp)+, %a2
+        moveq   #0, %d0
+        rts
+2:      movea.l (%sp)+, %a2
+fw_note_off:
+        link.w  %fp, #-124
+        moveq   #127, %d0
+        movem.l %d2-%d6/%a2, (%sp)
+        jmp     NOTE_OFF + 10
 
 | dispatch: a2 = the table; 12(sp) brain, 16(sp) event (after its return
 | address and the caller's saved a2). -> d0 = the first nonzero result, or 0.

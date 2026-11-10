@@ -210,7 +210,11 @@ def main():
             {'name': 'voice-hook-tail',
              'sections': [{'name': 'tail', 'kind': 'text', 'align': 8, 'hex': '5499a801408c' + '3e061c00184f'}],
              'symbols': [{'name': 'core_dsp_voice_tail', 'section': 'tail', 'value': 0, 'global': True}],
-             'relocs': []}],
+             'relocs': []},
+            # core 2.7: the SDK machines' voices (sdk_dsp.s, sdk_dsp.c; DigiKit's pk_build makes sdk-dsp.dko.json)
+            {'dko': 'sdk-dsp.dko.json', 'name': 'sdk-dsp',
+             'externs': {'fw_frame.': '0x%x' % externs['_fw_frame'], 'fw_trig_latch.': '0x%x' % externs['_fw_trig_latch'],
+                         'fw_records.': '0x%x' % externs['_fw_records']}}],
         'tables': {
             'core_dsp_voices': {'kind': 'list', 'row': 8, 'max': 16, 'end': '00' * 8},
             'core_mf_selector': {'kind': 'indexed', 'row': 4, 'rows': MF_LAST + 1,

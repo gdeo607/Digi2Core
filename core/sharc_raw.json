@@ -36,6 +36,15 @@
     }
    ],
    "relocs": []
+  },
+  {
+   "dko": "sdk-dsp.dko.json",
+   "name": "sdk-dsp",
+   "externs": {
+    "fw_frame.": "0x2558dc",
+    "fw_trig_latch.": "0x24f0cc",
+    "fw_records.": "0x2412cc"
+   }
   }
  ],
  "tables": {
